@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Clipper & Short Generator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #9333ea 50%, #db2777 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen selection:bg-purple-500 selection:text-white">
+
+    <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center text-white shadow-lg shadow-purple-500/30">
+                    <i class="fa-solid fa-scissors text-lg"></i>
+                </div>
+                <span class="text-xl font-bold bg-gradient-to-r from-white via-slate-200 to-purple-400 bg-clip-text text-transparent">
+                    ClipGenie AI
+                </span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                    <span class="w-2 h-2 rounded-full bg-purple-400 mr-2 animate-pulse"></span>
+                    Gemini 3 Flash Powered
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        
+        <!-- Hero / Input Section -->
+        <div class="max-w-3xl mx-auto text-center mb-12">
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4">
+                Ubah Video Panjang Menjadi <span class="bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 bg-clip-text text-transparent">KlIP Viral Otomatis</span>
+            </h1>
+            <p class="text-slate-400 text-sm sm:text-base mb-8">
+                Cukup masukkan link video (YouTube/Podcast/Vlog), AI Gemini akan menganalisis momen terbaik, membuat hook pancingan penonton, deskripsi, dan skor viral instan!
+            </p>
+
+            <!-- Input Form Card -->
+            <div class="bg-slate-900/80 border border-slate-800 p-3 sm:p-4 rounded-2xl shadow-2xl backdrop-blur-md">
+                <form id="clipForm" class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-grow">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
+                            <i class="fa-solid fa-link"></i>
+                        </div>
+                        <input type="url" id="videoUrl" required
+                            placeholder="Tempel link video di sini (cth: https://youtube.com/watch?v=...)"
+                            class="w-full pl-11 pr-4 py-3.5 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 text-sm transition-all">
+                    </div>
+                    <button type="submit" id="submitBtn"
+                        class="gradient-bg hover:opacity-95 text-white font-semibold px-8 py-3.5 rounded-xl shadow-lg shadow-purple-600/30 transition-all flex items-center justify-center space-x-2 text-sm">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Buat Klip Viral</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden max-w-xl mx-auto my-16 text-center">
+            <div class="relative w-20 h-20 mx-auto mb-6">
+                <div class="absolute inset-0 rounded-full border-4 border-purple-500/20"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-purple-500 border-t-transparent animate-spin"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-purple-400">
+                    <i class="fa-solid fa-brain text-2xl animate-pulse"></i>
+                </div>
+            </div>
+            <h3 id="loadingText" class="text-lg font-semibold text-slate-200 mb-2">Menganalisis Transkrip Video...</h3>
+            <p class="text-sm text-slate-400">Gemini sedang meriset momen-momen emosional & menyusun hook viral terbaik untuk Anda.</p>
+        </div>
+
+        <!-- Notification Banner -->
+        <div id="notification" class="hidden fixed bottom-5 right-5 z-50 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all transform translate-y-20">
+            <i class="fa-solid fa-circle-check text-lg"></i>
+            <span id="notificationText" class="text-sm font-medium">Berhasil disalin!</span>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="hidden space-y-8">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                        <i class="fa-solid fa-clapperboard text-purple-400"></i>
+                        <span>Hasil Rekomendasi Klip Pendek</span>
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">AI berhasil memotong video menjadi beberapa segmen dengan potensi viral tertinggi.</p>
+                </div>
+                <button onclick="resetApp()" class="px-4 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 rounded-xl text-xs font-medium transition-all">
+                    <i class="fa-solid fa-rotate-right mr-1.5"></i> Proses Link Lain
+                </button>
+            </div>
+
+            <!-- Clips Grid -->
+            <div id="clipsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically populated clips -->
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // DOM Elements
+        const clipForm = document.getElementById('clipForm');
+        const videoUrlInput = document.getElementById('videoUrl');
+        const loadingState = document.getElementById('loadingState');
+        const loadingText = document.getElementById('loadingText');
+        const resultsSection = document.getElementById('resultsSection');
+        const clipsGrid = document.getElementById('clipsGrid');
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notificationText');
+
+        const loadingMessages = [
+            "Menghubungkan ke server video & mengekstrak transkrip lengkap...",
+            "Gemini AI menganalisis pacing, retensi, & emosi penonton...",
+            "Menemukan 10+ momen emas dengan potensi viral tertinggi...",
+            "Menyusun hook pemancing impresi & auto-viral kit..."
+        ];
+
+        let msgInterval;
+
+        clipForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = videoUrlInput.value.trim();
+            if (!url) return;
+
+            // Show loading
+            clipForm.parentElement.parentElement.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            resultsSection.classList.add('hidden');
+
+            let msgIndex = 0;
+            loadingText.textContent = loadingMessages[0];
+            msgInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % loadingMessages.length;
+                loadingText.textContent = loadingMessages[msgIndex];
+            }, 1800);
+
+            try {
+                const clipsData = await callGeminiForClips(url);
+                clearInterval(msgInterval);
+                loadingState.classList.add('hidden');
+                renderClips(clipsData);
+                resultsSection.classList.remove('hidden');
+            } catch (error) {
+                clearInterval(msgInterval);
+                loadingState.classList.add('hidden');
+                clipForm.parentElement.parentElement.classList.remove('hidden');
+                showNotification("Terjadi kesalahan saat memproses video. Silakan coba lagi.", true);
+                console.error(error);
+            }
+        });
+
+        async function callGeminiForClips(videoUrl) {
+            const systemPrompt = `Anda adalah seorang expert YouTube Shorts / TikTok & Instagram Reels Growth Content Strategist serta Video Editor profesional. 
+Tugas Anda adalah menerima URL video panjang (atau simulasi konten dari URL tersebut) dan membaginya menjadi tepat 10 klip pendek dengan potensi viral tertinggi.
+Untuk setiap klip, berikan output dalam format JSON array berisi objek dengan properti:
+- "clipNumber": nomor urut dari 1 sampai 10
+- "title": Judul klip yang catchy dan bikin penasaran (bahasa Indonesia)
+- "timeRange": rentang waktu potongan (contoh: "01:23 - 02:05")
+- "hook": Kalimat pembuka / Hook 3 detik pertama yang sangat provokatif dan kuat untuk menahan penonton
+- "summary": Ringkasan inti isi klip tersebut
+- "description": Deskripsi siap-pakai lengkap dengan Call to Action (CTA) dan hashtag viral
+- "viralScore": Angka antara 88 sampai 99 (representasi potensi viral)
+- "editingTips": Tips visual/efek transisi untuk editor agar klip makin estetik.`;
+
+            const userQuery = `Analisis video berikut dan buatkan tepat 10 ide klip pendek (Shorts/Reels) lengkap dengan hook & auto viral kit: ${videoUrl}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                clipNumber: { type: "INTEGER" },
+                                title: { type: "STRING" },
+                                timeRange: { type: "STRING" },
+                                hook: { type: "STRING" },
+                                summary: { type: "STRING" },
+                                description: { type: "STRING" },
+                                viralScore: { type: "INTEGER" },
+                                editingTips: { type: "STRING" }
+                            },
+                            propertyOrdering: ["clipNumber", "title", "timeRange", "hook", "summary", "description", "viralScore", "editingTips"]
+                        }
+                    }
+                }
+            };
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            // Exponential backoff fetch implementation
+            let response;
+            let attempt = 0;
+            const maxRetries = 4;
+            let delay = 1000;
+
+            while (attempt < maxRetries) {
+                try {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) break;
+                } catch (err) {
+                    // network error, retry
+                }
+                attempt++;
+                if (attempt >= maxRetries) break;
+                await new Promise(r => setTimeout(r, delay));
+                delay *= 2;
+            }
+
+            if (!response || !response.ok) {
+                throw new Error("API request failed");
+            }
+
+            const result = await response.json();
+            const jsonString = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!jsonString) throw new Error("Invalid response format");
+
+            return JSON.parse(jsonString);
+        }
+
+        function renderClips(clips) {
+            clipsGrid.innerHTML = '';
+            clips.forEach(clip => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-xl hover:border-purple-500/50 transition-all group";
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="px-3 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-full text-xs font-bold uppercase tracking-wider">
+                                Klip #${clip.clipNumber} • ${clip.timeRange}
+                            </span>
+                            <div class="flex items-center space-x-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full text-xs font-semibold">
+                                <i class="fa-solid fa-fire text-xs"></i>
+                                <span>Skor Viral: ${clip.viralScore}%</span>
+                            </div>
+                        </div>
+
+                        <h3 class="text-lg font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
+                            ${escapeHtml(clip.title)}
+                        </h3>
+                        
+                        <p class="text-slate-400 text-sm mb-4">
+                            ${escapeHtml(clip.summary)}
+                        </p>
+
+                        <!-- Hook Box -->
+                        <div class="mb-4 bg-purple-950/40 border border-purple-500/30 rounded-xl p-3.5">
+                            <div class="flex items-center space-x-2 text-xs font-bold text-purple-300 mb-1">
+                                <i class="fa-solid fa-bolt"></i>
+                                <span>HOOK UTAMA (0-3 Detik Pertama):</span>
+                            </div>
+                            <p class="text-slate-200 text-sm italic font-medium">
+                                "${escapeHtml(clip.hook)}"
+                            </p>
+                        </div>
+
+                        <!-- Editing Tips -->
+                        <div class="mb-4 text-xs text-slate-400 bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                            <span class="font-semibold text-slate-300 block mb-1"><i class="fa-solid fa-wand-magic mr-1 text-pink-400"></i> Tips Editing:</span>
+                            ${escapeHtml(clip.editingTips)}
+                        </div>
+
+                        <!-- Description & Tags Box -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Deskripsi & Hashtag Auto-Viral:</label>
+                            <div class="relative">
+                                <textarea readonly rows="3" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 focus:outline-none resize-none">${escapeHtml(clip.description)}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-800 flex items-center justify-between gap-3">
+                        <button onclick="copyToClipboard(this, \`${escapeQuotes(clip.description)}\`)" 
+                            class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all flex items-center justify-center space-x-2">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>Salin Deskripsi</span>
+                        </button>
+                        <button onclick="simulateExport(${clip.clipNumber})" 
+                            class="py-2.5 px-4 gradient-bg hover:opacity-90 text-white rounded-xl text-xs font-semibold transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Export Klip</span>
+                        </button>
+                    </div>
+                `;
+                clipsGrid.appendChild(card);
+            });
+        }
+
+        function resetApp() {
+            resultsSection.classList.add('hidden');
+            clipForm.parentElement.parentElement.classList.remove('hidden');
+            videoUrlInput.value = '';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function copyToClipboard(btn, text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            showNotification("Deskripsi dan Hashtag berhasil disalin ke clipboard!");
+        }
+
+        function simulateExport(clipNum) {
+            showNotification(`Memproses rendering klip #${clipNum} beresolusi 9:16 untuk TikTok/Shorts...`);
+            setTimeout(() => {
+                showNotification(`Klip #${clipNum} berhasil di-render dan siap di-upload!`);
+            }, 2500);
+        }
+
+        function showNotification(msg, isError = false) {
+            notificationText.textContent = msg;
+            notification.className = `fixed bottom-5 right-5 z-50 ${isError ? 'bg-red-600' : 'bg-emerald-600'} text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all transform translate-y-0`;
+            setTimeout(() => {
+                notification.className = `fixed bottom-5 right-5 z-50 ${isError ? 'bg-red-600' : 'bg-emerald-600'} text-white px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 transition-all transform translate-y-20`;
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function escapeQuotes(str) {
+            return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/'/g, "\\'");
+        }
+    </script>
+</body>
+</html>
